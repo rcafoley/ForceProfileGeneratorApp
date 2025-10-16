@@ -1,3 +1,4 @@
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -13,7 +14,7 @@ import os
 Force profile generator for complex fatigue modeling
 Copyright Ryan C. A. Foley 2023-10-29
 Updated with Streamlit implementation 2025-01-24
-v4.1.3
+v4.1.4
 """
 
 # Page configuration
@@ -189,6 +190,15 @@ def move_subtask(index, direction):
 def delete_subtask(index):
     """Delete a subtask"""
     st.session_state.subtasks.pop(index)
+
+def move_combined_profile(index, direction):
+    """Move combined profile up or down in the list"""
+    profiles = st.session_state.combined_profiles
+    if direction == 'up' and index > 0:
+        profiles[index], profiles[index-1] = profiles[index-1], profiles[index]
+    elif direction == 'down' and index < len(profiles) - 1:
+        profiles[index], profiles[index+1] = profiles[index+1], profiles[index]
+    st.session_state.combined_profiles = profiles
 
 def render_subtask(subtask, index):
     """Render a single subtask UI component"""
@@ -1024,7 +1034,7 @@ elif st.session_state.current_page == "About":
     st.markdown("""
     ## Force Profile Generator for Neuromuscular Fatigue Modelling
     
-    **Version:** 4.1.3  
+    **Version:** 4.1.4
     **Original Author:** Ryan C. A. Foley, PhD Candidate, CSEP Clinical Exercise Physiologist  
     **Current Laboratory:** Occupational Neuromechanics and Ergonomics (ONE) Laboratory – Dr. Nicholas La Delfa  
     **Institutional Affiliation:** Ontario Tech University, Oshawa, Ontario, Canada  
@@ -1076,7 +1086,7 @@ elif st.session_state.current_page == "About":
 st.markdown("---")
 st.markdown(
     f"<div style='text-align: center; color: {COLORS['dark_grey']};'>"
-    f"Muscle Fatigue Analysis System v4.1.3 | © 2025 ONE Laboratory, Ontario Tech University"
+    f"Muscle Fatigue Analysis System v4.1.4 | © 2025 ONE Laboratory, Ontario Tech University"
     f"</div>",
     unsafe_allow_html=True
 )
