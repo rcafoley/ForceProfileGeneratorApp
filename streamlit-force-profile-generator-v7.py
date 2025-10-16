@@ -13,6 +13,7 @@ import os
 Force profile generator for complex fatigue modeling
 Copyright Ryan C. A. Foley 2023-10-29
 Updated with Streamlit implementation 2025-01-24
+v4.1.1
 """
 
 # Page configuration
@@ -989,12 +990,12 @@ elif st.session_state.current_page == "About":
     st.markdown("---")
     
     st.markdown("""
-    ## Force Profile Generator for Neuromuscular Fatigue Modeling
+    ## Force Profile Generator for Neuromuscular Fatigue Modelling
     
-    **Version:** 2.0 (Streamlit Implementation)  
+    **Version:** 4.1.1  
     **Original Author:** Ryan C. A. Foley, PhD Candidate, CSEP Clinical Exercise Physiologist  
-    **Laboratory:** Occupational Neuromechanics and Ergonomics (ONE) Laboratory  
-    **Institution:** Ontario Tech University, Oshawa, Ontario, Canada  
+    **Current Laboratory:** Occupational Neuromechanics and Ergonomics (ONE) Laboratory – Dr. Nicholas La Delfa  
+    **Institutional Affiliation:** Ontario Tech University, Oshawa, Ontario, Canada  
     
     ### Contact
     - **Academic Email:** ryan.foley@ontariotechu.ca
@@ -1002,39 +1003,19 @@ elif st.session_state.current_page == "About":
     - **GitHub:** [github.com/rcafoley](https://github.com/rcafoley)
     
     ### Purpose
-    This application generates force-time profiles for use in neuromuscular fatigue modeling. It allows researchers and clinicians to:
+    This application generates force-time profiles for use in neuromuscular fatigue modelling. It allows researchers and clinicians to:
     - Create complex force profiles with multiple subtask types
-    - Visualize force patterns over time
-    - Combine multiple profiles for complex work simulations
-    - Export data for further analysis
+    - Label the subtasks for easy adjustment and recall at a later time
+    - Visualize force patterns over time to verify the structure
+    - Repeat a profile or combine multiple profiles for complex work simulations
+    - Export data for further analysis via a muscle fatigue model
     
     ### Features
-    - **Multiple Subtask Types:** Constant force, linear slopes, ramps, precision work, and rest periods
+    - **Multiple Subtask Types:** Constant force, linear slopes, ramp contractions, shoulder activity during precision hand work, and rest periods
     - **Visual Profile Builder:** Intuitive interface with drag-and-drop reordering
     - **Profile Management:** Save, load, and combine multiple profiles
     - **Data Export:** Export to Excel for further analysis
     - **Real-time Visualization:** Interactive Plotly charts
-    
-    ### Precision Force Assumptions
-    The **Precision** subtask type is designed to estimate shoulder muscle activation during precision manual work tasks. This feature accounts for the postural demands of maintaining shoulder flexion during fine motor activities.
-    
-    The force values for different shoulder flexion angles are derived from:
-    1. **Published Research:** Brookham, R. L., Wong, J. M., & Dickerson, C. R. (2010). Upper limb posture and submaximal hand tasks influence shoulder muscle activity. *International Journal of Industrial Ergonomics*, *40*(3), 337-344.
-    2. **Unpublished Data:** Overhead work EMG data from the ONE Laboratory (Ontario Tech University)
-    
-    The implemented values represent anterior deltoid activation as a percentage of maximum voluntary contraction (%MVC):
-    - **0-45° shoulder flexion:** 5% MVC
-    - **45-90° shoulder flexion:** 12% MVC
-    - **>90° shoulder flexion:** 13.5% MVC
-    
-    These values provide reasonable estimates for fatigue modeling during precision work tasks requiring sustained shoulder postures.
-    
-    ### Usage Instructions
-    1. **Profile Builder:** Start by adding subtasks to create your force profile
-    2. **Visualize & Store:** View your profile and save it for later use
-    3. **Import Data:** Load existing force profiles from Excel files
-    4. **Combine Profiles:** Merge multiple profiles for complex scenarios
-    5. **Export Data:** Export combined profiles for analysis
     
     ### Technical Details
     - **Sample Rate:** Configurable from 1-1000 Hz
@@ -1042,15 +1023,28 @@ elif st.session_state.current_page == "About":
     - **Time Units:** Seconds
     - **Export Format:** Excel (.xlsx) with metadata, subtask details, and force profile data
     
+    ### Precision Force Assumptions
+    The **Precision** subtask type is designed to estimate shoulder muscle activation during precision manual work tasks. This feature accounts for the postural demands of maintaining shoulder flexion during fine motor activities that have no external loads applied.
+    
+    The force values for different shoulder flexion angles are derived from:
+    1. **Published Research:** Brookham, R. L., Wong, J. M., & Dickerson, C. R. (2010). Upper limb posture and submaximal hand tasks influence shoulder muscle activity. *International Journal of Industrial Ergonomics*, *40*(3), 337-344.
+    2. **Unpublished Data:** Overhead work EMG data from the ONE Laboratory (Ontario Tech University)
+    
+    There is the assumption of a relatively upright posture, such that gravity is accelerating the upper limb segments inferiorly and the angles are expressed as the humero-thoracic angle. The implemented values represent anterior deltoid activation as a percentage of maximum voluntary contraction (%MVC):
+    - **0-45° shoulder flexion:** 5% MVC
+    - **45-90° shoulder flexion:** 12% MVC
+    - **>90° shoulder flexion:** 13.5% MVC
+    
+    These values provide reasonable estimates for fatigue modelling during precision work tasks requiring sustained shoulder postures.
+    
     ---
     *© 2023-2025 Ryan C. A. Foley. All rights reserved.*
     """)
-
 # Footer
 st.markdown("---")
 st.markdown(
     f"<div style='text-align: center; color: {COLORS['dark_grey']};'>"
-    f"Force Profile Generator v2.0 | © 2025 ONE Laboratory, Ontario Tech University"
+    f"Muscle Fatigue Analysis System v4.1.1 | © 2025 ONE Laboratory, Ontario Tech University"
     f"</div>",
     unsafe_allow_html=True
 )
