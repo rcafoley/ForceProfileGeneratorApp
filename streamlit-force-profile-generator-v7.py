@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -888,10 +887,33 @@ elif st.session_state.current_page == "Combine Profiles":
         if st.session_state.combined_profiles:
             st.subheader("Current Combined Profile Components")
             
+            # Header row
+            header_cols = st.columns([0.5, 4, 1.5])
+            header_cols[0].markdown("**#**")
+            header_cols[1].markdown("**Profile Name**")
+            header_cols[2].markdown("**Actions**")
+            
+            # Display each profile
             for i, profile in enumerate(st.session_state.combined_profiles):
-                col1, col2 = st.columns([4, 1])
-                col1.write(f"{i+1}. {profile['name']}")
-                if col2.button("Remove", key=f"remove_{i}"):
+                col_num, col_name, col_controls = st.columns([0.5, 4, 1.5])
+                
+                # Profile number
+                col_num.markdown(f"**#{i + 1}**")
+                
+                # Profile name
+                col_name.write(profile['name'])
+                
+                # Control buttons
+                button_cols = col_controls.columns(3)
+                if button_cols[0].button("↑", key=f"profile_up_{i}", help="Move up"):
+                    move_combined_profile(i, 'up')
+                    st.rerun()
+                    
+                if button_cols[1].button("↓", key=f"profile_down_{i}", help="Move down"):
+                    move_combined_profile(i, 'down')
+                    st.rerun()
+                    
+                if button_cols[2].button("×", key=f"profile_remove_{i}", help="Remove"):
                     st.session_state.combined_profiles.pop(i)
                     st.rerun()
             
@@ -1034,7 +1056,7 @@ elif st.session_state.current_page == "About":
     st.markdown("""
     ## Force Profile Generator for Neuromuscular Fatigue Modelling
     
-    **Version:** 4.1.4
+    **Version:** 4.1.4  
     **Original Author:** Ryan C. A. Foley, PhD Candidate, CSEP Clinical Exercise Physiologist  
     **Current Laboratory:** Occupational Neuromechanics and Ergonomics (ONE) Laboratory – Dr. Nicholas La Delfa  
     **Institutional Affiliation:** Ontario Tech University, Oshawa, Ontario, Canada  
