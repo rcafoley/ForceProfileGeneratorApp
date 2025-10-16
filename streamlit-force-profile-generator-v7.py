@@ -13,7 +13,7 @@ import os
 Force profile generator for complex fatigue modeling
 Copyright Ryan C. A. Foley 2023-10-29
 Updated with Streamlit implementation 2025-01-24
-v4.1.1
+v4.1.2
 """
 
 # Page configuration
@@ -798,26 +798,85 @@ elif st.session_state.current_page == "Import Data":
 elif st.session_state.current_page == "Combine Profiles":
     st.title("Combine Force Profiles")
     
+    # Always show the combined profile visualization first if it exists
+    if st.session_state.combined_profiles:
+        # Generate and display combined profile visualization
+        combined_force = []
+        combined_time = []
+        combined_descriptions = []
+        current_time = 0
+        
+        fig = go.Figure()
+        
+        # Create one continuous line for the combined profile
+        for profile in st.session_state.combined_profiles:
+            # Add this profile's data
+            profile_time = [t + current_time for t in profile['time_array']]
+            combined_force.extend(profile['force_profile'])
+            combined_time.extend(profile_time)
+            combined_descriptions.extend(profile['task_descriptions'])
+            
+            # Add a vertical line at profile boundaries
+            if current_time > 0:
+                fig.add_vline(
+                    x=current_time,
+                    line_width=1,
+                    line_dash="dash",
+                    line_color="gray",
+                    opacity=0.5
+                )
+            
+            # Add annotation for profile name
+            if profile_time:
+                mid_time = (profile_time[0] + profile_time[-1]) / 2
+                max_force_in_segment = max(profile['force_profile']) if profile['force_profile'] else 0
+                fig.add_annotation(
+                    x=mid_time,
+                    y=max_force_in_segment * 1.1 if max_force_in_segment > 0 else 10,
+                    text=profile['name'],
+                    showarrow=False,
+                    font=dict(size=12, color='black'),
+                    bgcolor="white",
+                    bordercolor="black",
+                    borderwidth=1,
+                    borderpad=4
+                )
+            
+            current_time = profile_time[-1] + (1.0 / st.session_state.sample_rate)
+        
+        # Add the single continuous trace
+        if combined_force:
+            fig.add_trace(go.Scatter(
+                x=combined_time,
+                y=combined_force,
+                mode='lines',
+                name='Combined Profile',
+                line=dict(color=COLORS['future_blue'], width=3)
+            ))
+        
+        fig.update_layout(
+            title="Combined Force Profile",
+            xaxis_title="Time (s)",
+            yaxis_title="Force (%MVC)",
+            height=500,
+            showlegend=False,
+            yaxis=dict(range=[0, max(combined_force) * 1.2] if combined_force else [0, 100])
+        )
+        
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # Summary information
+        st.info(f"**Combined Profile:** {len(st.session_state.combined_profiles)} profile(s) | "
+                f"Total Duration: {combined_time[-1]:.1f}s | "
+                f"Total Data Points: {len(combined_force)}")
+    
+    # Profile management section
+    st.markdown("---")
+    
     if st.session_state.saved_profiles:
-        # Display saved profiles
-        st.subheader("Available Profiles")
-        
-        profile_list = []
-        for pid, profile in st.session_state.saved_profiles.items():
-            profile_list.append(f"{profile['name']} (ID: {pid})")
-        
-        selected_profile = st.selectbox("Select a profile to add", profile_list)
-        
-        if st.button("Add to Combined Profile"):
-            # Extract profile ID from selection
-            pid = selected_profile.split("(ID: ")[1].rstrip(")")
-            st.session_state.combined_profiles.append(st.session_state.saved_profiles[pid])
-            st.success(f"Added '{st.session_state.saved_profiles[pid]['name']}' to combined profile")
-        
-        # Display combined profiles
+        # Display combined profiles list
         if st.session_state.combined_profiles:
-            st.markdown("---")
-            st.subheader("Combined Profile Components")
+            st.subheader("Current Combined Profile Components")
             
             for i, profile in enumerate(st.session_state.combined_profiles):
                 col1, col2 = st.columns([4, 1])
@@ -826,102 +885,80 @@ elif st.session_state.current_page == "Combine Profiles":
                     st.session_state.combined_profiles.pop(i)
                     st.rerun()
             
-            # Generate combined profile visualization
-            combined_force = []
-            combined_time = []
-            combined_descriptions = []
-            current_time = 0
+            # Action buttons for combined profile
+            st.markdown("---")
+            col1, col2, col3 = st.columns(3)
             
-            fig = go.Figure()
+            with col1:
+                if st.button("🔄 Add More Profiles", type="secondary", use_container_width=True):
+                    # Just forces a rerun to show the add section below
+                    pass
             
-            # Create one continuous line for the combined profile
-            for profile in st.session_state.combined_profiles:
-                # Add this profile's data
-                profile_time = [t + current_time for t in profile['time_array']]
-                combined_force.extend(profile['force_profile'])
-                combined_time.extend(profile_time)
-                combined_descriptions.extend(profile['task_descriptions'])
-                
-                # Add a vertical line at profile boundaries
-                if current_time > 0:
-                    fig.add_vline(
-                        x=current_time,
-                        line_width=1,
-                        line_dash="dash",
-                        line_color="gray",
-                        opacity=0.5
-                    )
-                
-                # Add annotation for profile name
-                if profile_time:
-                    mid_time = (profile_time[0] + profile_time[-1]) / 2
-                    max_force_in_segment = max(profile['force_profile']) if profile['force_profile'] else 0
-                    fig.add_annotation(
-                        x=mid_time,
-                        y=max_force_in_segment * 1.1 if max_force_in_segment > 0 else 10,
-                        text=profile['name'],
-                        showarrow=False,
-                        font=dict(size=12, color='black'),
-                        bgcolor="white",
-                        bordercolor="black",
-                        borderwidth=1,
-                        borderpad=4
-                    )
-                
-                current_time = profile_time[-1] + (1.0 / st.session_state.sample_rate)
+            with col2:
+                if st.button("📤 Push to Export DataFrame", type="primary", use_container_width=True):
+                    # Generate the combined data for export
+                    combined_force_export = []
+                    combined_time_export = []
+                    combined_descriptions_export = []
+                    current_time_export = 0
+                    
+                    for profile in st.session_state.combined_profiles:
+                        profile_time = [t + current_time_export for t in profile['time_array']]
+                        combined_force_export.extend(profile['force_profile'])
+                        combined_time_export.extend(profile_time)
+                        combined_descriptions_export.extend(profile['task_descriptions'])
+                        current_time_export = profile_time[-1] + (1.0 / st.session_state.sample_rate)
+                    
+                    # Create dataframe from combined profile
+                    profile_id = len(st.session_state.export_df.columns) // 4 + 1
+                    
+                    new_data = pd.DataFrame({
+                        f'Timing_{profile_id}': combined_time_export,
+                        f'Force Values_{profile_id}': combined_force_export,
+                        f'Task Descriptions_{profile_id}': combined_descriptions_export,
+                        f'Profile ID_{profile_id}': [profile_id] * len(combined_time_export)
+                    })
+                    
+                    # Merge with existing export dataframe
+                    if st.session_state.export_df.empty:
+                        st.session_state.export_df = new_data
+                    else:
+                        # Align indices
+                        max_len = max(len(st.session_state.export_df), len(new_data))
+                        st.session_state.export_df = st.session_state.export_df.reindex(range(max_len), fill_value=np.nan)
+                        new_data = new_data.reindex(range(max_len), fill_value=np.nan)
+                        st.session_state.export_df = pd.concat([st.session_state.export_df, new_data], axis=1)
+                    
+                    st.success("✅ Combined profile added to export dataframe! The visualization remains here for reference.")
+                    # NOTE: We deliberately DO NOT clear st.session_state.combined_profiles here
             
-            # Add the single continuous trace
-            if combined_force:
-                fig.add_trace(go.Scatter(
-                    x=combined_time,
-                    y=combined_force,
-                    mode='lines',
-                    name='Combined Profile',
-                    line=dict(color=COLORS['future_blue'], width=3)
-                ))
-            
-            fig.update_layout(
-                title="Combined Force Profile",
-                xaxis_title="Time (s)",
-                yaxis_title="Force (%MVC)",
-                height=500,
-                showlegend=False,
-                yaxis=dict(range=[0, max(combined_force) * 1.2] if combined_force else [0, 100])
-            )
-            
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Push to dataframe button
-            if st.button("Push to Export DataFrame", type="primary"):
-                # Create dataframe from combined profile
-                profile_id = len(st.session_state.export_df.columns) // 4 + 1
-                
-                new_data = pd.DataFrame({
-                    f'Timing_{profile_id}': combined_time,
-                    f'Force Values_{profile_id}': combined_force,
-                    f'Task Descriptions_{profile_id}': combined_descriptions,
-                    f'Profile ID_{profile_id}': [profile_id] * len(combined_time)
-                })
-                
-                # Merge with existing export dataframe
-                if st.session_state.export_df.empty:
-                    st.session_state.export_df = new_data
-                else:
-                    # Align indices
-                    max_len = max(len(st.session_state.export_df), len(new_data))
-                    st.session_state.export_df = st.session_state.export_df.reindex(range(max_len), fill_value=np.nan)
-                    new_data = new_data.reindex(range(max_len), fill_value=np.nan)
-                    st.session_state.export_df = pd.concat([st.session_state.export_df, new_data], axis=1)
-                
-                st.success("Combined profile added to export dataframe!")
-                #st.session_state.combined_profiles = []  # Clear after pushing
-            
-            # Clear button
-            if st.button("Clear Combined Profiles", type="secondary"):
-                st.session_state.combined_profiles = []
-                st.rerun()
+            with col3:
+                if st.button("🗑️ Clear Combined Profile", type="secondary", use_container_width=True):
+                    if st.session_state.combined_profiles:
+                        st.session_state.combined_profiles = []
+                        st.rerun()
+        
+        # Add profiles section (always visible)
+        st.markdown("---")
+        st.subheader("Add Profiles to Combination")
+        
+        profile_list = []
+        for pid, profile in st.session_state.saved_profiles.items():
+            profile_list.append(f"{profile['name']} (ID: {pid})")
+        
+        col1, col2 = st.columns([3, 1])
+        selected_profile = col1.selectbox("Select a profile to add", profile_list, key="profile_selector")
+        
+        if col2.button("➕ Add Profile", type="primary", use_container_width=True):
+            # Extract profile ID from selection
+            pid = selected_profile.split("(ID: ")[1].rstrip(")")
+            st.session_state.combined_profiles.append(st.session_state.saved_profiles[pid])
+            st.success(f"✅ Added '{st.session_state.saved_profiles[pid]['name']}' to combined profile")
+            st.rerun()
+    
     else:
-        st.warning("No saved profiles available. Please create and save profiles first.")
+        st.warning("⚠️ No saved profiles available. Please create and save profiles first in the 'Visualize & Store' page.")
+        st.info("💡 **Workflow Tip:**\n1. Go to 'Profile Builder' to create subtasks\n2. Go to 'Visualize & Store' to save your profiles\n3. Return here to combine them")
 
 elif st.session_state.current_page == "Export Data":
     st.title("Export Force Profile Data")
@@ -992,7 +1029,7 @@ elif st.session_state.current_page == "About":
     st.markdown("""
     ## Force Profile Generator for Neuromuscular Fatigue Modelling
     
-    **Version:** 4.1.1  
+    **Version:** 4.1.2  
     **Original Author:** Ryan C. A. Foley, PhD Candidate, CSEP Clinical Exercise Physiologist  
     **Current Laboratory:** Occupational Neuromechanics and Ergonomics (ONE) Laboratory – Dr. Nicholas La Delfa  
     **Institutional Affiliation:** Ontario Tech University, Oshawa, Ontario, Canada  
@@ -1044,7 +1081,6 @@ elif st.session_state.current_page == "About":
 st.markdown("---")
 st.markdown(
     f"<div style='text-align: center; color: {COLORS['dark_grey']};'>"
-    f"Muscle Fatigue Analysis System v4.1.1 | © 2025 ONE Laboratory, Ontario Tech University"
+    f"Muscle Fatigue Analysis System v4.1.2 | © 2025 ONE Laboratory, Ontario Tech University"
     f"</div>",
     unsafe_allow_html=True
-)
