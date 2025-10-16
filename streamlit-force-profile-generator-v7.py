@@ -13,7 +13,7 @@ import os
 Force profile generator for complex fatigue modeling
 Copyright Ryan C. A. Foley 2023-10-29
 Updated with Streamlit implementation 2025-01-24
-v4.1.2
+v4.1.3
 """
 
 # Page configuration
@@ -887,14 +887,9 @@ elif st.session_state.current_page == "Combine Profiles":
             
             # Action buttons for combined profile
             st.markdown("---")
-            col1, col2, col3 = st.columns(3)
+            col1, col2 = st.columns(2)
             
             with col1:
-                if st.button("🔄 Add More Profiles", type="secondary", use_container_width=True):
-                    # Just forces a rerun to show the add section below
-                    pass
-            
-            with col2:
                 if st.button("📤 Push to Export DataFrame", type="primary", use_container_width=True):
                     # Generate the combined data for export
                     combined_force_export = []
@@ -932,7 +927,7 @@ elif st.session_state.current_page == "Combine Profiles":
                     st.success("✅ Combined profile added to export dataframe! The visualization remains here for reference.")
                     # NOTE: We deliberately DO NOT clear st.session_state.combined_profiles here
             
-            with col3:
+            with col2:
                 if st.button("🗑️ Clear Combined Profile", type="secondary", use_container_width=True):
                     if st.session_state.combined_profiles:
                         st.session_state.combined_profiles = []
@@ -1029,7 +1024,7 @@ elif st.session_state.current_page == "About":
     st.markdown("""
     ## Force Profile Generator for Neuromuscular Fatigue Modelling
     
-    **Version:** 4.1.2  
+    **Version:** 4.1.3  
     **Original Author:** Ryan C. A. Foley, PhD Candidate, CSEP Clinical Exercise Physiologist  
     **Current Laboratory:** Occupational Neuromechanics and Ergonomics (ONE) Laboratory – Dr. Nicholas La Delfa  
     **Institutional Affiliation:** Ontario Tech University, Oshawa, Ontario, Canada  
@@ -1081,7 +1076,7 @@ elif st.session_state.current_page == "About":
 st.markdown("---")
 st.markdown(
     f"<div style='text-align: center; color: {COLORS['dark_grey']};'>"
-    f"Muscle Fatigue Analysis System v4.1.2 | © 2025 ONE Laboratory, Ontario Tech University"
+    f"Muscle Fatigue Analysis System v4.1.3 | © 2025 ONE Laboratory, Ontario Tech University"
     f"</div>",
     unsafe_allow_html=True
-    )
+)
