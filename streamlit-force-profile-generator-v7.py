@@ -1084,3 +1084,4 @@ st.markdown(
     f"Muscle Fatigue Analysis System v4.1.2 | © 2025 ONE Laboratory, Ontario Tech University"
     f"</div>",
     unsafe_allow_html=True
+    )
