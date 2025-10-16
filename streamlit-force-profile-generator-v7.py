@@ -914,7 +914,7 @@ elif st.session_state.current_page == "Combine Profiles":
                     st.session_state.export_df = pd.concat([st.session_state.export_df, new_data], axis=1)
                 
                 st.success("Combined profile added to export dataframe!")
-                st.session_state.combined_profiles = []  # Clear after pushing
+                #st.session_state.combined_profiles = []  # Clear after pushing
             
             # Clear button
             if st.button("Clear Combined Profiles", type="secondary"):
